@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/chapter2/chapter2.iml" filepath="$PROJECT_DIR$/chapter2/chapter2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/chapter2-build.iml" filepath="$PROJECT_DIR$/.idea/modules/chapter2-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/chapter3.iml" filepath="$PROJECT_DIR$/.idea/modules/chapter3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/chapter3-build.iml" filepath="$PROJECT_DIR$/.idea/modules/chapter3-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/chapter2/excercise2.iml" filepath="$PROJECT_DIR$/chapter2/excercise2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fp_in_scala.iml" filepath="$PROJECT_DIR$/.idea/modules/fp_in_scala.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fp_in_scala-build.iml" filepath="$PROJECT_DIR$/.idea/modules/fp_in_scala-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fp_in_scala-chapter2.iml" filepath="$PROJECT_DIR$/.idea/modules/fp_in_scala-chapter2.iml" />
+    </modules>
+  </component>
+</project>
