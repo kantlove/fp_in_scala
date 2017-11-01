@@ -40,6 +40,16 @@ object Exercise1 {
     assert(List.append2(l, List(-10, 99)) == List(1, 2, 3, 5, -10, 99))
 
     assert(List.concat(List(l, List(0, -6), l)) == List(1, 2, 3, 5, 0, -6, 1, 2, 3, 5))
+
+    assert(List.increase(l, 2) == List(3, 4, 5, 7))
+
+    assert(List.toStringEach(l) == List("1", "2", "3", "5"))
+
+    assert(List.map(l)(x => (x, x.toString)) == List((1, "1"), (2, "2"), (3, "3"), (5, "5")))
+
+    assert(List.filter(l)(x => (x & 1) == 0) == List(2))
+
+    assert(List.flatMap(l)(x => List(x + 0.1, x + 0.2)) == List(1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 5.1, 5.2))
   }
 }
 
@@ -174,7 +184,45 @@ object List {
     foldLeft(reverse(l), other)((t, h) => Elem(h, t))
   }
 
+  /**
+    * Concatenate all the lists inside `lists` to form 1 list.
+    */
   def concat[A](lists: List[List[A]]): List[A] = {
-    foldRight(lists, Nil : List[A])(append)
+    foldRight2(lists, Nil : List[A])(append)
+  }
+
+  /**
+    * Increase each element of the list by `amount`.
+    */
+  def increase(l: List[Int], amount: Int): List[Int] = {
+    foldRight2(l, Nil : List[Int])((h, t) => Elem(h + amount, t))
+  }
+
+  /**
+    * Convert each element of the list to its string representation.
+    */
+  def toStringEach[A](l: List[A]): List[String] = {
+    foldRight2(l, Nil : List[String])((h, t) => Elem(h.toString, t))
+  }
+
+  /**
+    * Create a new list by applying `f` to each element.
+    */
+  def map[A, B](l: List[A])(f: A => B): List[B] = {
+    foldRight2(l, Nil: List[B])((h, t) => Elem(f(h), t))
+  }
+
+  /**
+    * Drop elements that don't satisfy the predicate `f`.
+    */
+  def filter[A](l: List[A])(f: A => Boolean): List[A] = {
+    foldRight2(l, Nil: List[A])((h, t) => if(f(h)) Elem(h, t) else t)
+  }
+
+  /**
+    * Create a new list by concatenating the results of applying `f` to each element.
+    */
+  def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] = {
+    foldRight2(l, Nil: List[B])((h, t) => concat(List(f(h), t)))
   }
 }
