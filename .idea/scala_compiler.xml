@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="SBT 1" modules="fp_in_scala,fp_in_scala-chapter2,chapter3" />
+    <profile name="SBT 1" modules="fp_in_scala,chapter2,chapter3" />
   </component>
 </project>
