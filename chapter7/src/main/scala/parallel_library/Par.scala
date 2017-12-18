@@ -4,16 +4,9 @@ import java.util.concurrent._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val task = Par.lazyUnit {
-      Thread.sleep(3000)
-      println("run lazily")
-      99
-    }
-
-    val es = Executors.newFixedThreadPool(3)
-    val future = Par.run(es)(task)
-    println("should be printed first")
-    println("result: " + future.get)
+    val a = Par.lazyUnit(42 + 1)
+    val exe = Executors.newFixedThreadPool(2)
+    println(Par.equal(exe)(a, Par.fork(a)))
   }
 }
 
@@ -46,9 +39,11 @@ object Par {
     * Marks a computation for concurrent evaluation.
     */
   def fork[A](a: => Par[A]): Par[A] =
-    es => es.submit(() => {
-      val p = a
-      p(es).get
+    es => es.submit(new Callable[A] {
+      override def call(): A = {
+        val p = a
+        p(es).get
+      }
     })
 
   /**
@@ -84,10 +79,10 @@ object Par {
   def asyncF[A, B](f: A => B): A => Par[B] =
     a => lazyUnit(f(a))
 
-  /**
-    * Returns the computation that will sort its result list.
-    */
-  def sortPar[A](parList: Par[List[A]]): Par[List[A]] = map(parList)(_.sorted)
+//  /**
+//    * Returns the computation that will sort its result list.
+//    */
+//  def sortPar[A](parList: Par[List[A]]): Par[List[A]] = map(parList)(_.sorted)
 
   /**
     * Converts a list of `Par` to a `Par` that returns a list.
@@ -103,4 +98,7 @@ object Par {
     val listOfPar = l.map(asyncF(f))
     sequence(listOfPar)
   }
+
+  def equal[A](es: ExecutorService)(p1: Par[A], p2: Par[A]): Boolean =
+    p1(es).get == p2(es).get
 }
