@@ -22,7 +22,7 @@ sealed trait List[+A] {
   def sum[B >: A](implicit num: Numeric[B]): B =
     this match {
       case Nil => num.zero
-      case Elem(h, t) => num.plus(h, t.sum)
+      case Elem(h, t) => num.plus(h, t.sum(num))
     }
 
   /**
