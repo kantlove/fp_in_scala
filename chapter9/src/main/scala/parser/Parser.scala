@@ -1,6 +1,8 @@
 package parser
 
 import language.higherKinds // enable feature Higher-kinded Type
+import org.scalacheck.Properties
+import org.scalacheck.Prop.forAll
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -8,19 +10,7 @@ object Main {
 }
 
 /**
-  * Represents operations that a parser can have. Laws that this trait holds:
-  *
-  * {{{
-  *   // Parsing a char `c` using `char` always returns `c`
-  *   run (char(c)) (c.toString) = Right(c)
-  *
-  *   // Parsing a string `s` using `string` always returns `s`
-  *   run (string(s)) (s) = Right(s)
-  *
-  *   // `or` succeeds if either parser succeeds
-  *   run ( or(string(s1), string(s2)) ) (s1) = Right(s1)
-  *   run ( or(string(s1), string(s2)) ) (s2) = Right(s2)
-  * }}}
+  * Represents operations that a parser can have.
   *
   * @tparam ParseError error that will be returned by operations defined in this trait.
   * @tparam Parser     a parser implementation.
@@ -68,7 +58,18 @@ trait Parsers[ParseError, Parser[_]] {
   /**
     * A parser that count the number of occurrence of `a`.
     */
-  def count[A](a: A): Parser[Int]
+  def count[A](a: A): Parser[Int] =
+    many(exact(a)).map(_.size)
+
+  /**
+    * A parser that recognizes 0 or more patterns of `p`.
+    */
+  def many[A](p: Parser[A]): Parser[Seq[A]]
+
+  /**
+    * Applies `f` to the result of `p`.
+    */
+  def map[A, B](p: Parser[A])(f: A => B): Parser[B]
 
   /**
     * Returns the result of the first succeeded parser.
@@ -91,108 +92,39 @@ trait Parsers[ParseError, Parser[_]] {
 
   implicit class ParserOps[A](p: Parser[A]) {
     /**
-      * Alias of `Parser.or`.
+      * Alias of `Parsers.or`.
       */
     def |(other: Parser[A]): Parser[A] =
       self.or(p, other)
-  }
 
-}
-
-trait CreditCard {
-  def charge(p: Int)
-}
-
-trait PaymentManager {
-  def charge(cc: CreditCard, p: Int)
-}
-
-case class Charge(card: CreditCard, price: Int) {
-  def combine(other: Charge): Charge =
-    other.card match {
-      case this.card => Charge(card, price + other.price)
-      case _ => throw new Exception("Cannot combine charges of different cards")
-    }
-}
-
-trait Misc[A, B] {
-  val f: A => B
-
-  // Returns the sum of `a` and `b`
-  def add(a: Int, b: Int): Int
-}
-
-case class Coffee(price: Int = 10)
-
-class Cafe {
-
-//  def buyCoffee(cc: CreditCard): Coffee = {
-//    val cup = Coffee()
-//    cc.charge(cup.price) // side effect
-//    cup
-//  }
-
-  def buyCoffee(cc: CreditCard, p: PaymentManager): Coffee = {
-    val cup = Coffee()
-    p.charge(cc, cup.price) // side effect
-    cup
-  }
-
-  def buyCoffee(cc: CreditCard): (Coffee, Charge) = {
-    val cup = Coffee()
-    (cup, Charge(cc, cup.price))
-  }
-
-  def buyCoffees(cc: CreditCard, quantity: Int): (List[Coffee], Charge) = {
-    // Purchase all the coffee. List[(Coffee, Charge)]
-    val purchases = List.fill(quantity)(buyCoffee(cc))
-
-    // Turn a list of pair -> pair of list. (List[Coffee], List[Charge])
-    val (coffees, charges) = purchases.unzip
-
-    // Return the coffee and the total charge.
-    (coffees, charges.reduceLeft((c1, c2) => c1.combine(c2)))
+    /**
+      * Alias of `Parsers.map`.
+      */
+    def map[B](f: A => B): Parser[B] =
+      self.map(p)(f)
   }
 
   /**
-    * Combines all smaller charges of a each credit card into a single charge.
+    * Laws that this trait holds:
+    *
+    * {{{
+    *   // Parsing a char `c` using `char` always returns `c`
+    *   run (char(c)) (c.toString) = Right(c)
+    *
+    *   // Parsing a string `s` using `string` always returns `s`
+    *   run (string(s)) (s) = Right(s)
+    *
+    *   // `or` succeeds if either parser succeeds
+    *   run ( or(string(s1), string(s2)) ) (s1) = Right(s1)
+    *   run ( or(string(s1), string(s2)) ) (s2) = Right(s2)
+    * }}}
     */
-  def collectCharges(charges: List[Charge]): List[Charge] = {
-    val eachCard = charges
-      .groupBy(_.card) // Map[ CreditCard, List[Charge] ]
-      .values // List[ List[Charge] ]
-
-    eachCard.map(_.reduceLeft(_ combine _)).toList
+  object Laws extends Properties("Parser") {
+    /**
+      * Parsing a char `c` using `char` always returns `c`
+      */
+    property("char") = forAll { (c: Char) =>
+      run(char(c))(c.toString) == Right(c)
+    }
   }
-
-  def isEven(i: Int): Boolean = {
-    println(s"checking $i")
-    i % 2 == 0
-  }
-
-  def add2(i: Int): Int = {
-    println(s"$i + 2")
-    i + 2
-  }
-
-  val l = List(1, 2, 3, 4, 5).view
-
-  l
-    .filter(isEven) // nothing happens
-    .map(add2) // nothing happens
-    .mkString(", ")
-
-  val sb = new StringBuilder("Hello")
-  // sb: StringBuilder = Hello
-
-  val sb2 = sb.append(" World")
-  // sb2: StringBuilder = Hello World
-
-  val s1 = sb2.toString()
-  // s1: String = Hello World
-
-  val s2 = sb2.toString()
-  // s2: String = Hello World World ??
-
-  val l2 = 1 :: List(1)
 }
