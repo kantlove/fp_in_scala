@@ -1,15 +1,9 @@
-
-# Created by https://www.gitignore.io/api/sbt,scala,intellij
-
 ### Intellij ###
 *.iws
 /out/
 .idea/
 
 ### SBT ###
-# Simple Build Tool
-# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
-
 dist/*
 target/
 lib_managed/
@@ -23,5 +17,3 @@ project/plugins/project/
 ### Scala ###
 *.class
 *.log
-
-# End of https://www.gitignore.io/api/sbt,scala,intellij
