@@ -13,4 +13,4 @@ case object Empty extends Stream[Nothing]
   * A stream element. `head` and `tail` only store how to compute its content, not the actually value.
   * 'Cons' = 'Construct'
   */
-case object Cons[+A](head: () => A, tail: () => Stream[A]) extends Stream[A]
+case class Cons[+A](head: () => A, tail: () => Stream[A]) extends Stream[A]
