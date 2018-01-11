@@ -145,89 +145,90 @@ case class Prop(check: TestCount => Result) {
     })
 }
 
-object Sampler {
-  val int: Sampler[Int] = new Sampler[Int] {
-    override def next: Int = Random.nextInt()
-  }
-
-  val boolean: Sampler[Boolean] = new Sampler[Boolean] {
-    override def next: Boolean = Random.nextBoolean()
-  }
-
-  val char: Sampler[Char] = new Sampler[Char] {
-    override def next: Char = Random.nextPrintableChar()
-  }
-
-  def string(maxLength: Int): Sampler[String] = new Sampler[String] {
-    override def next: String = {
-      val length = int.map(math.abs(_) % maxLength).next
-      List.fill(length)(char.next).mkString("")
-    }
-  }
-}
-
-/**
-  * Represents a sampler that knows how to create sample data.
-  * @tparam A type of the data.
-  */
-trait Sampler[A] {
-  /**
-    * Returns new data.
-    */
-  def next: A
-
-  def map[B](f: A => B): Sampler[B] = {
-    val self = this
-    new Sampler[B] {
-      override def next: B = f(self.next)
-    }
-  }
-}
-
 object Gen {
+  /**
+    * Always generates `a`.
+    * @param a the value to be generated.
+    */
   def unit[A](a: => A): Gen[A] =
-    new Gen[A](new Sampler[A] {
+    new Gen[A] {
       override def next: A = a
-    })
+    }
 
-  // to: exclusive
+  /**
+    * Generates an integer from `from` (inclusive)
+    * to `to` (exclusive).
+    */
   def int(from: Int, to: Int): Gen[Int] =
-    new Gen[Int](Sampler.int.map(_ % (to - from) + from))
+    new Gen[Int] {
+      override def next: Int = {
+        Random.nextInt() % (to - from) + from
+      }
+    }
 
+  /**
+    * Generates a pair of integers from `from`
+    * (inclusive) to `to` (exclusive).
+    */
   def int2(from: Int, to: Int): Gen[(Int, Int)] = {
     val x = int(from, to)
     val y = int(from, to)
     x.flatMap(xi => y.map(yi => (xi, yi)))
   }
 
-  def boolean: Gen[Boolean] = new Gen[Boolean](Sampler.boolean)
+  def boolean: Gen[Boolean] =
+    new Gen[Boolean] {
+      override def next: Boolean = Random.nextBoolean()
+    }
 
-  def char: Gen[Char] = new Gen[Char](Sampler.char)
+  def char: Gen[Char] =
+    new Gen[Char] {
+      override def next: Char = Random.nextPrintableChar()
+    }
 
-  def string(maxLength: Int = 50): Gen[String] = new Gen[String](Sampler.string(maxLength))
+  def string(maxLength: Int = 50): Gen[String] =
+    new Gen[String] {
+      override def next: String = {
+        val length = int(0, maxLength + 1).next
+        List.fill(length)(char.next).mkString("")
+      }
+    }
 
+  /**
+    * Generates a list of random length. Default maximum length is 50.
+    * @param g generator for elements in the list.
+    */
   def listOf[A](g: Gen[A]): Gen[List[A]] =
-    int(0, 50).map(List.fill(_)(g.sampler.next))
+    int(0, 50).map(List.fill(_)(g.next))
 
+  /**
+    * Generates a list of `n` elements.
+    * @param g generator for elements in the list.
+    */
   def listOfN[A](n: Int, g: Gen[A]): Gen[List[A]] =
-    new Gen[List[A]](new Sampler[List[A]] {
-      override def next: List[A] = List.fill(n)(g.sampler.next)
-    })
+    new Gen[List[A]] {
+      override def next: List[A] = List.fill(n)(g.next)
+    }
 }
 
 /**
-  * Represents a test case generator.
-  * @param sampler
+  * A data generator.
   * @tparam A type of the data.
   */
-case class Gen[A](private val sampler: Sampler[A]) extends Sampler[A] {
-  override def map[B](f: A => B): Gen[B] = Gen(sampler.map(f))
+trait Gen[A] { self =>
+  /**
+    * Returns new data.
+    */
+  def next: A
 
-  def flatMap[B](f: A => Gen[B]): Gen[B] = map(f).sampler.next
+  def map[B](f: A => B): Gen[B] =
+    new Gen[B] {
+      override def next: B = f(self.next)
+    }
+
+  def flatMap[B](f: A => Gen[B]): Gen[B] = map(f).next
 
   def toOption: Gen[Option[A]] = map(Option(_))
-
-  override def next: A = sampler.next
 
   def unsized: SGen[A] = ???
 }
